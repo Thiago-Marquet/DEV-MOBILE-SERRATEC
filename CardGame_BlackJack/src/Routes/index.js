@@ -1,5 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Blackjack } from "../Components/blackjack";
 import Game from "../screens/Game";
 import Home from "../screens/Home";
 

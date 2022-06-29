@@ -2,7 +2,7 @@ import { Button, StyleSheet, Text, View, Image} from 'react-native';
 import { useState } from 'react'
 import api from '../../services/api';
 
-export const Blackjack = () => {
+export const Blackjack = (props) => {
 
     const [playerCards, setPlayerCards] = useState([{
         cartas: {
@@ -11,15 +11,42 @@ export const Blackjack = () => {
         }
     }]);
 
+    const [botCards, setBotCards] = useState([{
+        cartas: {
+            valor: undefined,
+            img: undefined
+        } 
+    }])
+
     const [card, setCard] = useState([]);
+    const [cardBot, setCardBot] = useState([]);
+    const [botPoints, setBotPoints] = useState([]);
     const [playerPoints, setPlayerPoints] = useState([]);
     const [total, setTotal] = useState(null);
+    const [totalBot, setTotalBot] = useState(null); 
     const [click, setClick] = useState(false);
 
-    const handlePlayer = () =>{
-        somaValor();
+
+    const handleBotDeck = () =>{
+        cardBot.map(cards =>{
+            handleValorBot(),
+            setBotCards([...botCards, {
+                cartas: {
+                    valor: cards.value,
+                    img: cards.images.png
+                }
+            }]),
+            setBotPoints([...botPoints, parseInt(cards.value)])
+        })
+        if (botCards.indexOf(undefined)) {
+            botCards.shift();
+        }
+    }
+
+
+    const handlePlayerDeck = () =>{
         card.map(cards => {
-            handleValor(),
+            handleValorPlayer(),
                 setPlayerCards([...playerCards, {
                     cartas: {
                         valor: cards.value,
@@ -33,15 +60,32 @@ export const Blackjack = () => {
         }
     }
 
+    const getCardsBot = async () =>{
+        const {data} = await api.get('new/draw/?count=2')
+        setCardBot(data.cards);
+        handleBotDeck();
+    }
+
     const getCards = async () => {
         const { data } = await api.get(`new/draw/?count=1`);
         setCard(data.cards);
-        handlePlayer();
+        handlePlayerDeck();
         setClick(true);
+        getCardsBot();
     }
 
+    const handleValorBot = () =>{
+        cardBot.map(cards => {
+            if (isNaN(cards.value)) {
+                return cards.value = parseInt(10)
+            }
+            else {
+                return parseInt(cards.value);
+            }
+        })
+    }
 
-    const handleValor = () => {
+    const handleValorPlayer = () => {
         card.map(cards => {
             if (isNaN(cards.value)) {
                 return cards.value = parseInt(10)
@@ -52,10 +96,12 @@ export const Blackjack = () => {
         })
     }
     
-    const somaValor = () => {
+    const somaValor = async () => {
         setTotal(playerPoints.reduce(function (a, b) { return a + b}, 0))
+        setTotalBot(botPoints.reduce(function (a, b) {return a + b},0))
         if (total > 21) {
             alert("VOCÊ PERDEU!!! 😜")
+            props.nav.navigate("Home")
         }
         setClick(false)
     }
@@ -63,9 +109,13 @@ export const Blackjack = () => {
     const handleParar = () => {
         if (total > 21) {
             alert("VOCÊ PERDEU!!!")
+            setPlayerCards(null)
+            props.nav.navigate("Home")
         }
         else if (total <= 21 && total !== 0) {
             alert("VOCÊ VENCEU")
+            setPlayerCards(null)
+            props.nav.navigate("Home")
         }
     }
 
@@ -75,13 +125,19 @@ export const Blackjack = () => {
 
     return (
         <View style={styles.container}>
-            {playerCards && <Text style={{paddingTop: '5%'}}>PONTOS JOGADOR: {total}</Text>}
-            <View style={{ flex: 4, justifyContent: 'flex-start', flexDirection: 'row', flexWrap: 'wrap' }}>
-                {playerCards.map(card => {
+            {botCards && <Text style={{paddingTop: '5%'}}>PONTOS BOT: {totalBot}</Text>}
+            <View style={{ flex: 4, justifyContent: 'space-evenly', flexDirection: 'column', flexWrap: 'wrap' }}>
+                {botCards.map(card => {
                     return (
                         <Image style={styles.card} source={{ uri: card.cartas.img }} />
                     )
                 })}
+                {playerCards && <Text style={{ paddingTop: '5%' }}>PONTOS JOGADOR: {total}</Text>}
+                {playerCards.map(card => {
+                    return (
+                        <Image style={styles.card} source={{ uri: card.cartas.img }} />
+                    )
+                })} 
             </View>
             <View style={{margin: '20%',flexDirection: 'row' }}>
                 {click ? <Button title='Continuar?' onPress={somaValor}></Button> : 

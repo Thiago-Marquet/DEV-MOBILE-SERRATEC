@@ -2,10 +2,10 @@ import {StyleSheet} from 'react-native';
 import { Blackjack } from '../../Components/blackjack';
 
 
-const Game = () => {
+const Game = ({navigation}) => {
 
   return (
-    <Blackjack/>
+    <Blackjack nav={navigation}/>
   );
 }
 
